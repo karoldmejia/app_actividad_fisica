@@ -12,20 +12,19 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class UserEvent {
-    @EmbeddedId
-    private UserEventId id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
 
     private LocalDate registrationDate;
     private String attended; // CHAR(1)
 
     @ManyToOne
-    @MapsId("eventId")
-    @JoinColumn(name = "event_id")
+    @JoinColumn(name = "event_id", nullable = false)
     private Event event;
 
     @ManyToOne
-    @MapsId("userId")
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 }
 

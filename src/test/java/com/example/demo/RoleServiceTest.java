@@ -3,6 +3,7 @@ package com.example.demo;
 import com.example.demo.model.Permission;
 import com.example.demo.model.Role;
 import com.example.demo.model.RolePermission;
+import com.example.demo.repository.IRolePermissionRepository;
 import com.example.demo.repository.IRoleRepository;
 import com.example.demo.service.impl.RoleServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,77 +24,133 @@ public class RoleServiceTest {
     @Mock
     private IRoleRepository roleRepository;
 
+    @Mock
+    private IRolePermissionRepository rolePermissionRepository;
+
     @InjectMocks
     private RoleServiceImpl roleService;
 
     private Role role;
     private Role savedRole;
+    private Permission permiso1;
+    private Permission permiso2;
 
     @BeforeEach
     void setUp() {
         // Permisos de ejemplo
-        Permission permiso1 = new Permission();
+        permiso1 = new Permission();
         permiso1.setId(1);
         permiso1.setName("PERMISO_1");
 
-        Permission permiso2 = new Permission();
+        permiso2 = new Permission();
         permiso2.setId(2);
         permiso2.setName("PERMISO_2");
 
-        // Rol simple con permisos
+        // Rol simple
         role = new Role();
         role.setId(null);
         role.setName("PRUEBA");
         role.setDescription("Rol de prueba");
-
-        RolePermission rp1 = new RolePermission();
-        rp1.setPermission(permiso1);
-        rp1.setRole(role);
-
-        RolePermission rp2 = new RolePermission();
-        rp2.setPermission(permiso2);
-        rp2.setRole(role);
-
-        role.setRolePermissions(new ArrayList<>(Arrays.asList(rp1, rp2)));
 
         // Rol guardado (simula base de datos)
         savedRole = new Role();
         savedRole.setId(1L);
         savedRole.setName("PRUEBA");
         savedRole.setDescription("Rol de prueba");
-        savedRole.setRolePermissions(role.getRolePermissions());
+    }
+
+    @Test
+    void getPermissions_roleWithoutPermissions_returnsEmptyList() {
+        when(roleRepository.findPermissionsByRoleId(1L)).thenReturn(Collections.emptyList());
+
+        List<Permission> permisos = roleService.getPermissions(1L);
+
+        assertNotNull(permisos);
+        assertTrue(permisos.isEmpty());
+        verify(roleRepository, times(1)).findPermissionsByRoleId(1L);
     }
 
     @Test
     void saveRole_success() {
-        when(roleRepository.save(any(Role.class))).thenReturn(savedRole);
+        List<Permission> permisos = Arrays.asList(permiso1, permiso2);
 
-        Role result = roleService.save(role);
+        when(roleRepository.save(any(Role.class))).thenReturn(savedRole);
+        when(rolePermissionRepository.save(any(RolePermission.class))).thenReturn(null);
+
+        Role result = roleService.save(role, permisos);
 
         assertNotNull(result);
-        assertEquals(1L, result.getId());
         assertEquals("PRUEBA", result.getName());
 
-        // Verificamos que tenga permisos
-        assertNotNull(result.getRolePermissions());
-        assertEquals(2, result.getRolePermissions().size());
-
         verify(roleRepository, times(1)).save(role);
+        verify(rolePermissionRepository, times(2)).save(any(RolePermission.class));
     }
 
     @Test
     void saveRole_withoutPermissions_throwsException() {
-        role.setRolePermissions(Collections.emptyList());
+        Role role = new Role();
+        role.setName("RolTest");
+        role.setDescription("Rol de prueba");
+        // Caso 1: lista de permisos nula
+        RuntimeException exception1 = assertThrows(RuntimeException.class, () ->
+                roleService.save(role, null));
+        assertEquals("El rol debe tener al menos un permiso", exception1.getMessage());
+        // Caso 2: lista de permisos vacía
+        RuntimeException exception2 = assertThrows(RuntimeException.class, () ->
+                roleService.save(role, List.of()));
+        assertEquals("El rol debe tener al menos un permiso", exception2.getMessage());
+    }
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> roleService.save(role));
 
-        assertEquals("El rol debe tener al menos un permiso", exception.getMessage());
+    @Test
+    void updateRole_success() {
+        Role updatedDetails = new Role();
+        updatedDetails.setName("ROL_ACTUALIZADO");
+        updatedDetails.setDescription("Descripción actualizada");
+
+        List<Permission> newPermissions = Arrays.asList(permiso1, permiso2);
+
+        when(roleRepository.findById(1L)).thenReturn(Optional.of(savedRole));
+        when(roleRepository.save(savedRole)).thenReturn(savedRole);
+        doNothing().when(rolePermissionRepository).deleteAllByRole(savedRole);
+        when(rolePermissionRepository.save(any(RolePermission.class))).thenReturn(null);
+
+        Role result = roleService.update(1L, updatedDetails, newPermissions);
+
+        assertNotNull(result);
+        assertEquals("ROL_ACTUALIZADO", result.getName());
+        assertEquals("Descripción actualizada", result.getDescription());
+
+        verify(roleRepository, times(1)).findById(1L);
+        verify(roleRepository, times(1)).save(savedRole);
+        verify(rolePermissionRepository, times(1)).deleteAllByRole(savedRole);
+        verify(rolePermissionRepository, times(2)).save(any(RolePermission.class));
+    }
+
+    @Test
+    void updateRole_roleNotFound_throwsException() {
+        Role updatedDetails = new Role();
+        updatedDetails.setName("ROL_ACTUALIZADO");
+
+        List<Permission> newPermissions = Arrays.asList(permiso1, permiso2);
+
+        when(roleRepository.findById(1L)).thenReturn(Optional.empty());
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> roleService.update(1L, updatedDetails, newPermissions));
+
+        assertEquals("Rol no encontrado", exception.getMessage());
+
+        verify(roleRepository, times(1)).findById(1L);
+        verify(roleRepository, times(0)).save(any());
+        verify(rolePermissionRepository, times(0)).deleteAllByRole(any());
+        verify(rolePermissionRepository, times(0)).save(any());
     }
 
 
     @Test
     void getAllRoles_success() {
-        when(roleRepository.findAll()).thenReturn(Arrays.asList(savedRole));
+        when(roleRepository.findAll()).thenReturn(Collections.singletonList(savedRole));
 
         List<Role> roles = roleService.getAllRoles();
 
@@ -126,13 +183,16 @@ public class RoleServiceTest {
 
     @Test
     void deleteById_success() {
-        when(roleRepository.findById(2L)).thenReturn(Optional.of(savedRole));
-        doNothing().when(roleRepository).delete(any(Role.class));
+        when(roleRepository.findById(1L)).thenReturn(Optional.of(savedRole));
+        doNothing().when(rolePermissionRepository).deleteAllByRole(savedRole);
+        doNothing().when(roleRepository).delete(savedRole);
 
-        roleService.deleteById(2L);
+        roleService.deleteById(1L);
 
-        // Se deben limpiar los permisos
-        assertTrue(savedRole.getRolePermissions().isEmpty());
+        // Verificamos que se eliminaron los permisos asociados
+        verify(rolePermissionRepository, times(1)).deleteAllByRole(savedRole);
+
+        // Verificamos que se eliminó el rol
         verify(roleRepository, times(1)).delete(savedRole);
     }
 
@@ -140,8 +200,12 @@ public class RoleServiceTest {
     void deleteById_roleNotFound_throwsException() {
         when(roleRepository.findById(1L)).thenReturn(Optional.empty());
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> roleService.deleteById(1L));
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> roleService.deleteById(1L));
+
         assertEquals("Rol no encontrado", exception.getMessage());
+        verify(roleRepository, times(0)).delete(any());
+        verify(rolePermissionRepository, times(0)).deleteAllByRole(any());
     }
 
     @Test
@@ -150,19 +214,17 @@ public class RoleServiceTest {
         newPermission.setId(3);
         newPermission.setName("PERMISO_3");
 
-        // Simulamos que buscamos el rol
         when(roleRepository.findById(1L)).thenReturn(Optional.of(savedRole));
-        when(roleRepository.save(any(Role.class))).thenReturn(savedRole);
+        when(rolePermissionRepository.findByRoleAndPermission(savedRole, newPermission))
+                .thenReturn(Optional.empty());
+        when(rolePermissionRepository.save(any(RolePermission.class))).thenReturn(null);
 
         Role updatedRole = roleService.addPermissionToRole(1L, newPermission);
 
-        // Verificamos que se haya agregado
-        assertEquals(3, updatedRole.getRolePermissions().size());
-        assertTrue(updatedRole.getRolePermissions().stream()
-                .anyMatch(rp -> rp.getPermission().getId()==(3)));
-
+        assertNotNull(updatedRole);
         verify(roleRepository, times(1)).findById(1L);
-        verify(roleRepository, times(1)).save(savedRole);
+        verify(rolePermissionRepository, times(1)).findByRoleAndPermission(savedRole, newPermission);
+        verify(rolePermissionRepository, times(1)).save(any(RolePermission.class));
     }
 
     @Test
@@ -177,54 +239,102 @@ public class RoleServiceTest {
                 () -> roleService.addPermissionToRole(1L, newPermission));
 
         assertEquals("Rol no encontrado", exception.getMessage());
+        verify(rolePermissionRepository, times(0)).save(any());
     }
 
     @Test
+    void addPermissionToRole_permissionAlreadyExists_throwsException() {
+        Permission existingPermission = new Permission();
+        existingPermission.setId(1);
+        existingPermission.setName("EXISTENTE");
+
+        when(roleRepository.findById(1L)).thenReturn(Optional.of(savedRole));
+        when(rolePermissionRepository.findByRoleAndPermission(savedRole, existingPermission))
+                .thenReturn(Optional.of(new RolePermission()));
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> roleService.addPermissionToRole(1L, existingPermission));
+
+        assertEquals("El permiso ya está asignado a este rol", exception.getMessage());
+        verify(rolePermissionRepository, times(1)).findByRoleAndPermission(savedRole, existingPermission);
+        verify(rolePermissionRepository, times(0)).save(any());
+    }
+
+
+    @Test
     void removePermissionFromRole_success() {
-        // Queremos eliminar permiso2, pero queda permiso1
         Permission permisoToRemove = new Permission();
         permisoToRemove.setId(2);
         permisoToRemove.setName("PERMISO_2");
 
+        RolePermission rp = new RolePermission();
+        rp.setPermission(permisoToRemove);
+        rp.setRole(savedRole);
+
         when(roleRepository.findById(1L)).thenReturn(Optional.of(savedRole));
-        when(roleRepository.save(any(Role.class))).thenReturn(savedRole);
+        when(rolePermissionRepository.countByRole(savedRole)).thenReturn(2L);
+        when(rolePermissionRepository.findByRoleAndPermission(savedRole, permisoToRemove))
+                .thenReturn(Optional.of(rp));
+        doNothing().when(rolePermissionRepository).delete(rp);
 
-        Role updatedRole = roleService.removePermissionFromRole(1L, permisoToRemove);
+        Role result = roleService.removePermissionFromRole(1L, permisoToRemove);
 
-        assertEquals(1, updatedRole.getRolePermissions().size());
-        assertTrue(updatedRole.getRolePermissions().stream()
-                .noneMatch(rp -> rp.getPermission().getId()==(2)));
-
+        assertNotNull(result);
         verify(roleRepository, times(1)).findById(1L);
-        verify(roleRepository, times(1)).save(savedRole);
+        verify(rolePermissionRepository, times(1)).countByRole(savedRole);
+        verify(rolePermissionRepository, times(1)).findByRoleAndPermission(savedRole, permisoToRemove);
+        verify(rolePermissionRepository, times(1)).delete(rp);
     }
 
     @Test
     void removePermissionFromRole_lastPermission_throwsException() {
-        // Creamos un rol con un solo permiso
         Permission onlyPermission = new Permission();
         onlyPermission.setId(1);
         onlyPermission.setName("PERMISO_UNICO");
 
-        Role singlePermissionRole = new Role();
-        singlePermissionRole.setId(2L);
-        singlePermissionRole.setName("ROL_UNICO");
-        singlePermissionRole.setRolePermissions(new ArrayList<>());
-        RolePermission rp = new RolePermission();
-        rp.setPermission(onlyPermission);
-        rp.setRole(singlePermissionRole);
-        singlePermissionRole.getRolePermissions().add(rp);
-
-        when(roleRepository.findById(2L)).thenReturn(Optional.of(singlePermissionRole));
+        when(roleRepository.findById(2L)).thenReturn(Optional.of(savedRole));
+        when(rolePermissionRepository.countByRole(savedRole)).thenReturn(1L);
 
         RuntimeException exception = assertThrows(RuntimeException.class,
                 () -> roleService.removePermissionFromRole(2L, onlyPermission));
 
         assertEquals("No se puede eliminar el último permiso del rol. Asigne otro permiso antes o elimine el rol.",
                 exception.getMessage());
-
-        verify(roleRepository, times(1)).findById(2L);
-        verify(roleRepository, times(0)).save(any());
+        verify(rolePermissionRepository, times(1)).countByRole(savedRole);
     }
+
+    @Test
+    void removePermissionFromRole_permissionNotAssigned_throwsException() {
+        Permission nonAssigned = new Permission();
+        nonAssigned.setId(5);
+        nonAssigned.setName("NO_ASIGNADO");
+
+        when(roleRepository.findById(1L)).thenReturn(Optional.of(savedRole));
+        when(rolePermissionRepository.countByRole(savedRole)).thenReturn(2L);
+        when(rolePermissionRepository.findByRoleAndPermission(savedRole, nonAssigned))
+                .thenReturn(Optional.empty());
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> roleService.removePermissionFromRole(1L, nonAssigned));
+
+        assertEquals("El permiso no está asignado a este rol", exception.getMessage());
+        verify(rolePermissionRepository, times(1)).findByRoleAndPermission(savedRole, nonAssigned);
+        verify(rolePermissionRepository, times(0)).delete(any());
+    }
+
+    @Test
+    void removePermissionFromRole_roleNotFound_throwsException() {
+        Permission anyPermission = new Permission();
+        anyPermission.setId(1);
+        anyPermission.setName("CUALQUIERA");
+
+        when(roleRepository.findById(10L)).thenReturn(Optional.empty());
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> roleService.removePermissionFromRole(10L, anyPermission));
+
+        assertEquals("Rol no encontrado", exception.getMessage());
+    }
+
 
 }

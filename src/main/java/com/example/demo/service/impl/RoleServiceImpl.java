@@ -3,6 +3,7 @@ package com.example.demo.service.impl;
 import com.example.demo.model.Permission;
 import com.example.demo.model.Role;
 import com.example.demo.model.RolePermission;
+import com.example.demo.repository.IRolePermissionRepository;
 import com.example.demo.repository.IRoleRepository;
 import com.example.demo.service.IRoleService;
 import lombok.RequiredArgsConstructor;
@@ -16,14 +17,49 @@ import java.util.Optional;
 public class RoleServiceImpl implements IRoleService {
 
     private final IRoleRepository roleRepository;
+    private final IRolePermissionRepository rolePermissionRepository;
 
-    // Crear o actualizar rol
-    public Role save(Role role) {
-        if (role.getRolePermissions() == null || role.getRolePermissions().isEmpty()) {
+
+    public List<Permission> getPermissions(Long roleId) {
+        return roleRepository.findPermissionsByRoleId(roleId);
+    }
+    public Role save(Role role, List<Permission> permissions) {
+        if (permissions == null || permissions.isEmpty()) {
             throw new RuntimeException("El rol debe tener al menos un permiso");
         }
-        return roleRepository.save(role);
+        Role savedRole = roleRepository.save(role);
+        for (Permission permission : permissions) {
+            RolePermission rp = new RolePermission();
+            rp.setRole(savedRole);
+            rp.setPermission(permission);
+            rolePermissionRepository.save(rp);
+        }
+        return savedRole;
     }
+
+    public Role update(Long roleId, Role roleDetails, List<Permission> permissions) {
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
+
+        // Actualizar los datos básicos
+        role.setName(roleDetails.getName());
+        role.setDescription(roleDetails.getDescription());
+        Role updatedRole = roleRepository.save(role);
+
+        // Eliminar permisos antiguos
+        rolePermissionRepository.deleteAllByRole(role);
+
+        // Agregar los permisos nuevos
+        for (Permission permission : permissions) {
+            RolePermission rp = new RolePermission();
+            rp.setRole(updatedRole);
+            rp.setPermission(permission);
+            rolePermissionRepository.save(rp);
+        }
+
+        return updatedRole;
+    }
+
 
     // Obtener todos los roles
     public List<Role> getAllRoles() {
@@ -44,36 +80,48 @@ public class RoleServiceImpl implements IRoleService {
     public void deleteById(Long id) {
         Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
-        role.getRolePermissions().clear(); // limpiar permisos antes de borrar
+        // Primero eliminar todos los permisos asociados
+        rolePermissionRepository.deleteAllByRole(role);
         roleRepository.delete(role);
     }
 
-    // Agregar un permiso a un rol
+
     public Role addPermissionToRole(Long roleId, Permission permission) {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
-        RolePermission rolePermission = new RolePermission();
-        rolePermission.setRole(role);
-        rolePermission.setPermission(permission);
-        role.getRolePermissions().add(rolePermission);
 
-        return roleRepository.save(role);
+        // Verificar si ya existe para evitar duplicados
+        boolean exists = rolePermissionRepository.findByRoleAndPermission(role, permission).isPresent();
+        if (exists) {
+            throw new RuntimeException("El permiso ya está asignado a este rol");
+        }
+        RolePermission rp = new RolePermission();
+        rp.setRole(role);
+        rp.setPermission(permission);
+        rolePermissionRepository.save(rp);
+
+        return role;
     }
+
 
     // Remover un permiso de un rol
     public Role removePermissionFromRole(Long roleId, Permission permission) {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
-        // Verificar si es el último permiso
-        if (role.getRolePermissions().size() <= 1 &&
-                role.getRolePermissions().stream()
-                        .anyMatch(rp -> rp.getPermission().getId()==(permission.getId()))) {
+        // Contar cuántos permisos tiene el rol
+        long totalPermisos = rolePermissionRepository.countByRole(role);
+
+        if (totalPermisos <= 1) {
             throw new RuntimeException(
                     "No se puede eliminar el último permiso del rol. Asigne otro permiso antes o elimine el rol."
             );
         }
-        role.getRolePermissions().removeIf(rp -> rp.getPermission().getId()==(permission.getId()));
-        return roleRepository.save(role);
+        // Verificar si existe esa relación
+        RolePermission rp = rolePermissionRepository.findByRoleAndPermission(role, permission)
+                .orElseThrow(() -> new RuntimeException("El permiso no está asignado a este rol"));
+        rolePermissionRepository.delete(rp);
+        return role;
     }
+
 
 }

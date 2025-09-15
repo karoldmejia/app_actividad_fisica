@@ -35,7 +35,7 @@ class PermissionServiceTest {
         // Lista de permisos
         permissions = new ArrayList<>();
         permissions.add(permission);
-        permissions.add(new Permission(2, "WRITE", "Write access", new ArrayList<>()));
+        permissions.add(new Permission(2, "WRITE", "Write access"));
     }
 
     @Test
@@ -124,5 +124,29 @@ class PermissionServiceTest {
         assertEquals("Permission not found", exception.getMessage());
         verify(permissionRepository, times(1)).deleteById(999);
     }
+
+    @Test
+    void findAllPermissions_success() {
+        when(permissionRepository.findAll()).thenReturn(permissions);
+
+        List<Permission> result = permissionService.findAll();
+
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        verify(permissionRepository, times(1)).findAll();
+    }
+
+    @Test
+    void getPermissionsByIds_success() {
+        List<Integer> ids = List.of(1, 2);
+        when(permissionRepository.findAllById(ids)).thenReturn(permissions);
+
+        List<Permission> result = permissionService.getPermissionsByIds(ids);
+
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        verify(permissionRepository, times(1)).findAllById(ids);
+    }
+
 
 }

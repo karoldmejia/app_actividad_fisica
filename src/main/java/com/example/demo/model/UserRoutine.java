@@ -12,19 +12,18 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class UserRoutine {
-    @EmbeddedId
-    private UserRoutineId id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
 
     private LocalDate assignmentDate;
     private String status;
 
     @ManyToOne
-    @MapsId("userId")
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @ManyToOne
-    @MapsId("routineId")
-    @JoinColumn(name = "routine_id")
+    @JoinColumn(name = "routine_id", nullable = false)
     private Routine routine;
 }

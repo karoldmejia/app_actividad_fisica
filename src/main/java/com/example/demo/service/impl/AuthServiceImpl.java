@@ -21,7 +21,9 @@ public class AuthServiceImpl implements IAuthService {
     @Override
     public String login(LoginRequest request) {
         User user = userRepository.findByInstitutionalEmail(request.getInstitutionalEmail())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado")
+                );
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales inválidas");

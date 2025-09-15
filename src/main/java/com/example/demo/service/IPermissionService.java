@@ -11,4 +11,6 @@ public interface IPermissionService {
     Permission save(Permission permission);
     Permission update(int id, Permission permission);
     void deleteById(int id);
+    public List<Permission> getPermissionsByIds(List<Integer> ids);
+
 }

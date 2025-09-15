@@ -17,16 +17,18 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
-public class UserServiceTest {
+class UserServiceTest {
 
     @Mock
     private IUserRepository userRepository;
+
     @Mock
     private PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private UserServiceImpl userService;
 
@@ -40,7 +42,7 @@ public class UserServiceTest {
         role.setName("Prueba");
         role.setDescription("Rol de prueba");
 
-        // Usuario nuevo (sin id, para crear)
+        // Usuario nuevo
         user = new User();
         user.setUserId(null);
         user.setName("Karol");
@@ -48,7 +50,7 @@ public class UserServiceTest {
         user.setPassword("12345");
         user.setRole(role);
 
-        // Usuario guardado (con id, simula DB)
+        // Usuario guardado
         savedUser = new User();
         savedUser.setUserId(1);
         savedUser.setName("Karol");
@@ -119,8 +121,7 @@ public class UserServiceTest {
 
     @Test
     void findByEmail_success() {
-        when(userRepository.findByInstitutionalEmail("karol@icesi.edu.co"))
-                .thenReturn(Optional.of(savedUser));
+        when(userRepository.findByInstitutionalEmail("karol@icesi.edu.co")).thenReturn(Optional.of(savedUser));
 
         Optional<User> userOptional = userService.findByEmail("karol@icesi.edu.co");
 
@@ -134,11 +135,12 @@ public class UserServiceTest {
         Role newRole = new Role();
         newRole.setName("NuevoRol");
         newRole.setDescription("Rol actualizado");
+
         when(userRepository.findById(1)).thenReturn(Optional.of(savedUser));
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
+
         User updatedUser = userService.changeUserRole(1, newRole);
 
-        // Verificamos que el rol haya cambiado
         assertNotNull(updatedUser);
         assertEquals("NuevoRol", updatedUser.getRole().getName());
         verify(userRepository, times(1)).findById(1);
@@ -149,7 +151,9 @@ public class UserServiceTest {
     void changeUserRole_userNotFound_throwsException() {
         Role newRole = new Role();
         newRole.setName("NuevoRol");
+
         when(userRepository.findById(1)).thenReturn(Optional.empty());
+
         RuntimeException exception = assertThrows(RuntimeException.class,
                 () -> userService.changeUserRole(1, newRole));
 
@@ -158,4 +162,34 @@ public class UserServiceTest {
         verify(userRepository, never()).save(any(User.class));
     }
 
+    @Test
+    void changeUserRole_newRoleIsNull_throwsException() {
+        when(userRepository.findById(1)).thenReturn(Optional.of(savedUser));
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> userService.changeUserRole(1, null));
+
+        assertEquals("El nuevo rol no puede ser nulo", exception.getMessage());
+        verify(userRepository, times(1)).findById(1);
+        verify(userRepository, never()).save(any(User.class)); // no debería guardar nada
+    }
+
+    @Test
+    void initializedUsers_encodesPasswords() {
+        User rawUser = new User();
+        rawUser.setUserId(2);
+        rawUser.setName("RawUser");
+        rawUser.setInstitutionalEmail("raw@icesi.edu.co");
+        rawUser.setPassword("plaintext");
+        rawUser.setRole(role);
+
+        when(userRepository.findAll()).thenReturn(Arrays.asList(rawUser));
+        when(passwordEncoder.encode("plaintext")).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class))).thenReturn(rawUser);
+
+        userService.initializedUsers();
+
+        assertTrue(rawUser.getPassword().startsWith("encodedPassword"));
+        verify(userRepository, times(1)).save(rawUser);
+    }
 }

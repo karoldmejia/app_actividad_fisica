@@ -47,4 +47,9 @@ public class PermissionServiceImpl implements IPermissionService {
     public void deleteById(int id) {
         permissionRepository.deleteById(id);
     }
+
+    @Override
+    public List<Permission> getPermissionsByIds(List<Integer> ids) {
+        return permissionRepository.findAllById(ids);
+    }
 }

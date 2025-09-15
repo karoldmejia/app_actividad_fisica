@@ -17,10 +17,10 @@ import java.time.LocalDateTime;
 public class ExerciseProgress {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer progressId;
+    private int progressId;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     private LocalDateTime progressDate;

@@ -1,6 +1,9 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.RoleDTO;
+import com.example.demo.model.Permission;
 import com.example.demo.model.Role;
+import com.example.demo.service.impl.PermissionServiceImpl;
 import com.example.demo.service.impl.RoleServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +17,7 @@ import java.util.Optional;
 public class RoleController {
 
     private final RoleServiceImpl roleService;
+    private final PermissionServiceImpl permissionService;  // Necesario para convertir IDs a Permission
 
     @GetMapping
     public List<Role> getAll() {
@@ -31,14 +35,27 @@ public class RoleController {
     }
 
     @PostMapping
-    public Role create(@RequestBody Role role) {
-        return roleService.save(role);
+    public Role create(@RequestBody RoleDTO roleDTO) {
+        Role role = new Role();
+        role.setName(roleDTO.getName());
+        role.setDescription(roleDTO.getDescription());
+
+        // Convertir los IDs de permisos a objetos Permission
+        List<Permission> permisos = permissionService.getPermissionsByIds(roleDTO.getPermissionIds());
+
+        return roleService.save(role, permisos);
     }
 
     @PutMapping("/{id}")
-    public Role update(@PathVariable Long id, @RequestBody Role role) {
+    public Role update(@PathVariable Long id, @RequestBody RoleDTO roleDTO) {
+        Role role = new Role();
         role.setId(id);
-        return roleService.save(role);
+        role.setName(roleDTO.getName());
+        role.setDescription(roleDTO.getDescription());
+
+        List<Permission> permisos = permissionService.getPermissionsByIds(roleDTO.getPermissionIds());
+
+        return roleService.save(role, permisos);
     }
 
     @DeleteMapping("/{id}")

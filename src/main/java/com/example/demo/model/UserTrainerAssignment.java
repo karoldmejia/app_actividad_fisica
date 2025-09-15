@@ -12,19 +12,18 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class UserTrainerAssignment {
-    @EmbeddedId
-    private UserTrainerAssignmentId id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
 
     private LocalDate assignmentDate;
     private String status;
 
     @ManyToOne
-    @MapsId("userId")
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @ManyToOne
-    @MapsId("trainerId")
-    @JoinColumn(name = "trainer_id")
+    @JoinColumn(name = "trainer_id", nullable = false)
     private Trainer trainer;
 }

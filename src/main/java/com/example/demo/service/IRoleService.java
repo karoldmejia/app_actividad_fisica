@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface IRoleService {
-    Role save(Role role);
+    Role save(Role role, List<Permission> permissions);
     List<Role> getAllRoles();
     Optional<Role> getRoleById(Long id);
     Optional<Role> getRoleByName(String name);
