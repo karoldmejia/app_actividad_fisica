@@ -3,6 +3,7 @@ package com.example.demo.service;
 import java.util.List;
 import java.util.Optional;
 
+import com.example.demo.model.Role;
 import com.example.demo.model.User;
 
 public interface IUserService {
@@ -11,4 +12,5 @@ public interface IUserService {
     public List<User> getAllUsers();
     public Optional<User> getUserById(Integer id);
     public void initializedUsers();
+    public User changeUserRole(Integer userId, Role newRole);
 }

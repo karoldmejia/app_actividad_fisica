@@ -128,4 +128,34 @@ public class UserServiceTest {
         assertEquals("Karol", userOptional.get().getName());
         verify(userRepository, times(1)).findByInstitutionalEmail("karol@icesi.edu.co");
     }
+
+    @Test
+    void changeUserRole_success() {
+        Role newRole = new Role();
+        newRole.setName("NuevoRol");
+        newRole.setDescription("Rol actualizado");
+        when(userRepository.findById(1)).thenReturn(Optional.of(savedUser));
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        User updatedUser = userService.changeUserRole(1, newRole);
+
+        // Verificamos que el rol haya cambiado
+        assertNotNull(updatedUser);
+        assertEquals("NuevoRol", updatedUser.getRole().getName());
+        verify(userRepository, times(1)).findById(1);
+        verify(userRepository, times(1)).save(savedUser);
+    }
+
+    @Test
+    void changeUserRole_userNotFound_throwsException() {
+        Role newRole = new Role();
+        newRole.setName("NuevoRol");
+        when(userRepository.findById(1)).thenReturn(Optional.empty());
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> userService.changeUserRole(1, newRole));
+
+        assertEquals("Usuario no encontrado", exception.getMessage());
+        verify(userRepository, times(1)).findById(1);
+        verify(userRepository, never()).save(any(User.class));
+    }
+
 }

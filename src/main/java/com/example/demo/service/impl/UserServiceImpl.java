@@ -66,5 +66,17 @@ public class UserServiceImpl implements IUserService{
         }
     }
 
+    // Cambiar el rol de un usuario
+    public User changeUserRole(Integer userId, Role newRole) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        if (newRole == null) {
+            throw new RuntimeException("El nuevo rol no puede ser nulo");
+        }
+        user.setRole(newRole);
+        return userRepository.save(user);
+    }
+
+
 }
 
