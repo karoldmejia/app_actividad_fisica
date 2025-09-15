@@ -17,6 +17,9 @@ public class RoleServiceImpl implements IRoleService {
 
     // Crear o actualizar rol
     public Role save(Role role) {
+        if (role.getRolePermissions() == null || role.getRolePermissions().isEmpty()) {
+            throw new RuntimeException("El rol debe tener al menos un permiso");
+        }
         return roleRepository.save(role);
     }
 
