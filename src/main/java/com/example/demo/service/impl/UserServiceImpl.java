@@ -20,20 +20,39 @@ public class UserServiceImpl implements IUserService{
     private final IUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public Optional<User> findByEmail(String email) {
-        return userRepository.findByInstitutionalEmail(email);
-    }
-
+    // Crear o actualizar usuario
     public User save(User user) {
-        return userRepository.save(user);
+        if (user.getRole() == null) {
+            throw new RuntimeException("Usuario debe tener un rol asignado");
+        }
+        // Codificar contraseña si no está codificada
+        if (!user.getPassword().startsWith("$2a$")) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
+        return userRepository.save(user); // sirve para crear o actualizar
     }
 
+    // Obtener todos los usuarios
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
+    // Obtener usuario por ID
     public Optional<User> getUserById(Integer id) {
         return userRepository.findById(id);
+    }
+
+    // Obtener usuario por email
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByInstitutionalEmail(email);
+    }
+
+    // Eliminar usuario
+    public void deleteById(Integer id) {
+        if (!userRepository.existsById(id)) {
+            throw new RuntimeException("Usuario no encontrado");
+        }
+        userRepository.deleteById(id);
     }
 
     @Override

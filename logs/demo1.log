@@ -1,0 +1,38 @@
+2025-09-14 21:42:48.548  INFO 28012 --- [back] [main] com.example.demo.AuthControllerTest      : Starting AuthControllerTest using Java 21.0.2 with PID 28012 (started by KAROLD in C:\Users\KAROLD\Documents\universidad\s6\compu_net2\app_actividad_fisica)
+2025-09-14 21:42:48.552  INFO 28012 --- [back] [main] com.example.demo.AuthControllerTest      : The following 1 profile is active: "test"
+2025-09-14 21:42:51.789  INFO 28012 --- [back] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-09-14 21:42:52.019  INFO 28012 --- [back] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 172 ms. Found 1 JPA repository interface.
+2025-09-14 21:42:53.887  INFO 28012 --- [back] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-09-14 21:42:54.307  INFO 28012 --- [back] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.4.4.Final
+2025-09-14 21:42:54.433  INFO 28012 --- [back] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-09-14 21:42:55.429  INFO 28012 --- [back] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-09-14 21:42:55.539  INFO 28012 --- [back] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-09-14 21:42:56.169  INFO 28012 --- [back] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:file:./db-kevin-test user=POSTGRES
+2025-09-14 21:42:56.174  INFO 28012 --- [back] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-09-14 21:42:56.259  WARN 28012 --- [back] [main] org.hibernate.orm.deprecation            : HHH90000025: H2Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-09-14 21:42:59.894  INFO 28012 --- [back] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-09-14 21:43:00.150  INFO 28012 --- [back] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-09-14 21:43:01.994  WARN 28012 --- [back] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-09-14 21:43:02.099  WARN 28012 --- [back] [main] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: a8bedd00-f359-4817-9336-bd52971d3c33
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2025-09-14 21:43:03.675  INFO 28012 --- [back] [main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@69b436a7, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@5dfd4fac, org.springframework.security.web.context.SecurityContextHolderFilter@4349389d, org.springframework.security.web.header.HeaderWriterFilter@6b578779, org.springframework.web.filter.CorsFilter@1d2aa638, org.springframework.security.web.authentication.logout.LogoutFilter@6a486afb, com.example.demo.util.JwtFilter@6939f18a, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@11df0bc7, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@66c88fce, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@2f08e6d3, org.springframework.security.web.access.ExceptionTranslationFilter@46c92d27, org.springframework.security.web.access.intercept.AuthorizationFilter@1134a934]
+2025-09-14 21:43:04.797  INFO 28012 --- [back] [main] o.s.b.a.h2.H2ConsoleAutoConfiguration    : H2 console available at '/h2-console'. Database available at 'jdbc:h2:file:./db-kevin-test'
+2025-09-14 21:43:05.202  INFO 28012 --- [back] [main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2025-09-14 21:43:05.203  INFO 28012 --- [back] [main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2025-09-14 21:43:05.210  INFO 28012 --- [back] [main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 6 ms
+2025-09-14 21:43:05.348  INFO 28012 --- [back] [main] com.example.demo.AuthControllerTest      : Started AuthControllerTest in 17.834 seconds (process running for 21.351)
+2025-09-14 21:43:08.349  INFO 28012 --- [back] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-09-14 21:43:08.376  WARN 28012 --- [back] [SpringApplicationShutdownHook] o.h.engine.jdbc.spi.SqlExceptionHelper   : SQL Error: 90121, SQLState: 90121
+2025-09-14 21:43:08.377 ERROR 28012 --- [back] [SpringApplicationShutdownHook] o.h.engine.jdbc.spi.SqlExceptionHelper   : La base de datos ya esta cerrada (para des-habilitar el cerrado automatico durante el shutdown de la VM, agregue ";DB_CLOSE_ON_EXIT=FALSE" a la URL de conexión)
+Database is already closed (to disable automatic closing at VM shutdown, add ";DB_CLOSE_ON_EXIT=FALSE" to the db URL) [90121-224]
+2025-09-14 21:43:08.392  WARN 28012 --- [back] [SpringApplicationShutdownHook] o.h.engine.jdbc.spi.SqlExceptionHelper   : SQL Error: 90121, SQLState: 90121
+2025-09-14 21:43:08.393 ERROR 28012 --- [back] [SpringApplicationShutdownHook] o.h.engine.jdbc.spi.SqlExceptionHelper   : La base de datos ya esta cerrada (para des-habilitar el cerrado automatico durante el shutdown de la VM, agregue ";DB_CLOSE_ON_EXIT=FALSE" a la URL de conexión)
+Database is already closed (to disable automatic closing at VM shutdown, add ";DB_CLOSE_ON_EXIT=FALSE" to the db URL) [90121-224]
+2025-09-14 21:43:08.394  WARN 28012 --- [back] [SpringApplicationShutdownHook] o.s.b.f.support.DisposableBeanAdapter    : Invocation of destroy method failed on bean with name 'entityManagerFactory': org.hibernate.exception.JDBCConnectionException: Unable to release JDBC Connection used for DDL execution [La base de datos ya esta cerrada (para des-habilitar el cerrado automatico durante el shutdown de la VM, agregue ";DB_CLOSE_ON_EXIT=FALSE" a la URL de conexión)
+Database is already closed (to disable automatic closing at VM shutdown, add ";DB_CLOSE_ON_EXIT=FALSE" to the db URL) [90121-224]] [n/a]
+2025-09-14 21:43:08.395  INFO 28012 --- [back] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-09-14 21:43:08.409  INFO 28012 --- [back] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
